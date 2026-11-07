@@ -1,0 +1,34 @@
+# Arduino / build outputs
+build/
+*.elf
+*.hex
+*.bin
+*.map
+*.eep
+*.a
+*.o
+*.d
+*.tmp
+*.log
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets / local config
+.env
+.env.local
+
+# PlatformIO (if later added)
+.pio/
+.pioenvs/
+.piolibdeps/
+.clangd/
+
+# Temporary files
+*.swp
+*.swo
