@@ -23,7 +23,7 @@ Thumbs.db
 .env
 .env.local
 
-# PlatformIO (if later added)
+# PlatformIO build files
 .pio/
 .pioenvs/
 .piolibdeps/

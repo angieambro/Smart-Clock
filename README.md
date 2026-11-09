@@ -1,42 +1,20 @@
 # Smartclock Arduino Project
 
-This repository is the starting point for an Arduino-based smart clock project. It includes a basic project layout for code, libraries, examples, and notes so you can keep the development work organized.
+This repository contains the starter firmware and hardware notes for an Arduino Due smart clock.
 
 ## Project Structure
 
-- `src/` — main Arduino sketch and source files
-- `include/` — shared headers and project definitions
-- `lib/` — project-specific or third-party library code
-- `examples/` — sample sketches and test programs
-- `docs/` — wiring notes, component lists, and design documentation
+- `src/` — main firmware source
+- `include/` — pin assignments and shared definitions
+- `docs/` — hardware notes and beginner code guide
+- `platformio.ini` — Arduino Due settings and required libraries
 
-## Getting Started
+## Build and Upload
 
-1. Open this folder in the Arduino IDE or in VS Code with the Arduino extension.
-2. Add or edit the sketch in `src/main.ino`.
-3. Connect your board and upload code using the Arduino IDE.
-4. Keep notes and wiring references in `docs/`.
+Install PlatformIO, open this folder in VS Code, connect the Arduino Due, then build/upload the `due` environment. PlatformIO installs the libraries listed in `platformio.ini`.
 
-## Example Sketch
+The firmware uses the DS3231, DHT11, DFPlayer Mini, ST7735S TFT, rotary encoder, and motor driver. It shows the time, date, temperature, humidity, audio state, volume, and motor state on the screen.
 
-The default sketch is a simple Arduino template with `setup()` and `loop()`.
+Encoder actions: rotate to change DFPlayer volume, short press to play/pause track 1, and hold for 0.8 seconds to toggle the motor. The six LED outputs are currently initialized off; their behavior has not been specified yet.
 
-## Suggested Workflow
-
-- Keep reusable logic in `lib/` or `include/`.
-- Save tested example code in `examples/`.
-- Document wiring, pin mapping, and calibration in `docs/`.
-
-## Notes
-
-This project is intentionally lightweight so it can be expanded as the clock features grow.
-
-## Next Steps
-
-- Add RTC module support
-- Add display driver code
-- Add Wi-Fi or Bluetooth features
-- Add sensors and alarms
-- Add a proper hardware pinout document
-
-If you want, I can also turn this into a PlatformIO project structure or wire up a specific hardware stack next.
+Start with [docs/code-guide.md](docs/code-guide.md) for a plain-language explanation of the code. See [docs/hardware.md](docs/hardware.md) for the wiring, power rails, and hardware cautions.
