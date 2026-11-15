@@ -1,67 +1,69 @@
 # Firmware Code Guide
 
-This guide explains the first Smartclock firmware in plain language. The program is written in C++ for the Arduino Due and uses small library objects to talk to the clock, sensor, audio player, and screen.
+The Talkie Toaster firmware currently runs only the master core. The root
+Arduino sketch starts the core, which reads sensors and manages alarm, timer,
+encoder, and actuator behavior. Teammate module folders remain as implementation
+scaffolds and are not yet integrated into the main loop.
 
 ## Project Files
 
-- `src/main.cpp` contains the program: startup, component setup, button handling, sensor reads, and screen updates.
-- `include/pins.h` gives names to the Due pins. For example, code can use `MOTOR_PIN` instead of remembering that the motor transistor is on D9.
-- `platformio.ini` tells PlatformIO which board and libraries to use.
-- `docs/hardware.md` explains how the code's pin names connect to the schematic.
+- `TalkieToaster.ino` initializes and updates the master core.
+- `shared/pins.h` is the canonical Arduino Due pin map.
+- `shared/system_state.h` defines the state exchanged by the modules.
+- `01_angie_feng_master_core/` handles the RTC, DHT11, encoder, alarm, timer,
+  temperature thresholds, motor PWM, and SG90 servo.
+- `02_nara_sun_lamp/`, `03_faith_tft_ui/`, `04_thang_alert_leds/`, and
+  `05_binhao_audio/` contain owner-ready headers and empty `.cpp` scaffolds.
 
-## What Happens at Startup
+## Startup and Main Loop
 
-Arduino calls `setup()` once after power is applied or the board is reset. It starts the native USB serial connection for debug messages, configures the LEDs and motor output, and sets the encoder pins to `INPUT_PULLUP`. A pull-up makes an unpressed switch read HIGH; pressing the button connects it to ground, so it reads LOW.
+Arduino calls `setup()` once. It starts native USB logging and initializes the
+master core without waiting for a serial connection.
 
-The program then starts the RTC over I2C, the DFPlayer over `Serial1`, and the display over hardware SPI. If the RTC says it lost power, its time is initialized from the date and time when this firmware was compiled. The display is rotated to landscape and the backlight is switched on.
+The root sketch delegates its work to the master core. Teammate modules are
+not called or compiled in the master build until they are implemented.
 
-## What Happens Repeatedly
+## Encoder and Modes
 
-After `setup()`, Arduino calls `loop()` again and again. Each pass does three short jobs:
+The Due calls `onEncoderTurn()` from a hardware interrupt when encoder A falls.
+That function records the direction; the main loop copies and clears the
+volatile count with interrupts briefly disabled.
 
-1. `handleEncoder()` collects rotation events and checks the push-button.
-2. `readSensors()` reads the DHT11 no more than once every two seconds.
-3. `updateScreen()` refreshes the display once per second.
+In normal mode, a long press toggles the motor. Double-click cycles between
+normal mode, alarm setup, and timer setup. In alarm setup, rotation edits the
+selected hour or minute and short press switches fields; long press enables
+the alarm. In timer setup, rotation changes the duration in 15-second steps,
+short press starts/pauses, and long press exits. Short press dismisses an
+active alert; long press snoozes an alarm for five minutes. Audio, volume, and
+display controls are not included in this master-only firmware.
 
-The code uses `millis()` for timing instead of pausing with long `delay()` calls. That leaves time for the encoder and the other components to keep working.
+## Alarm, Timer, and Sensors
 
-## Encoder and Button
+The core reads the DS3231 periodically and updates the shared date/time. If
+the RTC lost power, its time is initialized from the firmware build time. The
+alarm triggers once per day at its configured hour and minute.
 
-The Due calls `onEncoderTurn()` from a hardware interrupt when encoder A changes from HIGH to LOW. The function checks encoder B to decide which direction the knob moved. It only records the movement; `handleEncoder()` applies the volume change later in the normal loop.
+The DHT11 is read every two seconds. Invalid readings are reported. Temperature
+alerts use 30 C and 15 C as initial high/low thresholds.
 
-`encoderSteps` is marked `volatile` because an interrupt can change it without warning while the main program is running. The code briefly disables interrupts while copying and clearing that value, then turns interrupts back on. This prevents a rotation from being partly lost during the copy.
+The countdown uses elapsed `millis()` time, so it continues without blocking
+the encoder, clock, or other updates.
 
-The push-button is checked by polling. `BUTTON_DEBOUNCE_MS` ignores very fast electrical changes caused by the physical switch. A short press tells the DFPlayer to play or pause track 1. Holding the button at least 0.8 seconds and then releasing it toggles the motor.
+## Display, LEDs, and Audio
 
-## Sensors, Clock, and Screen
+The master core drives motor PWM on D9 and sweeps the SG90 signal on D8
+between 45 and 135 degrees while active, returning to 90 degrees when the motor
+stops. TFT, sun-lamp, alert LED, and DFPlayer implementations remain for the
+teammates.
 
-`readSensors()` asks the DHT library for temperature and humidity. DHT11 readings can fail, so the program checks for invalid `NaN` values and leaves placeholders on the display when there is no valid reading.
+## Safe Changes and Testing
 
-`drawScreen()` clears and redraws the 128x160 display in landscape orientation. It shows the DS3231 time/date, the latest temperature and humidity, the audio state and volume, and whether the motor is on. `updateScreen()` uses a timer so drawing happens once per second rather than on every pass through `loop()`.
-
-The Amazon listing identifies the display controller as ST7735S. `Adafruit_ST7735` sends graphics commands over SPI; `Adafruit_GFX` supplies common drawing and text functions used by that driver. The `INITR_BLACKTAB` setting handles one common ST7735 panel layout. If the display has shifted colors or a misaligned image, its panel may need a different tab/offset setting.
-
-## Audio and Motor
-
-`playerReady` records whether the DFPlayer answered during startup. The program only sends audio commands if it is ready. `volume` is limited to 0 through 30, and the starting level is deliberately set to 10.
-
-`setMotor()` controls the transistor, not the motor directly. D9 sends a PWM signal through the 1 kohm base resistor. `MOTOR_PWM_DUTY` sets the on-speed from 0 to 255; changing the constant changes the duty cycle. The motor's supply current comes from the LM2596 rail, not from the Due GPIO pin.
-
-## C++ Terms Used Here
-
-- A `#include` line makes a library or project header available to this file.
-- A function is a named group of instructions. For example, `readSensors()` is called from `loop()` when sensor data should be refreshed.
-- A variable stores a value that can change, such as `volume` or `motorRunning`.
-- A `const` value is a setting that the program does not change while running, such as a pin number or timing interval.
-- `bool` stores either `true` or `false`; `uint8_t` stores a small non-negative number; `float` can store decimal readings.
-- `if` chooses which instructions run based on a condition. For example, audio commands are skipped if `playerReady` is false.
-- `millis()` is the number of milliseconds since startup. Subtracting an earlier value from it checks whether enough time has passed without stopping the program.
-
-## Safe Changes to Start With
-
-- To change a pin, edit `include/pins.h` and make the same wiring change; do not assign one pin to two components.
-- To change the initial audio level, edit `STARTING_VOLUME` in `src/main.cpp`.
-- To change motor speed, adjust `MOTOR_PWM_DUTY` between 0 and 255, then verify the motor voltage and current physically.
-- Build with `py -m platformio run` before uploading. The Due's native USB port is used for debug messages; its programming port is used to upload.
-
-The six LEDs are initialized off but do not yet have a programmed pattern. Add their intended behavior only after deciding what they should indicate.
+- Change pin assignments only in `shared/pins.h`.
+- Adjust the temperature thresholds in
+  `01_angie_feng_master_core/core_logic.cpp`.
+- Build the master firmware with PlatformIO before uploading.
+- For Phase 1, power the Due from 5 V Micro-USB; leave the motor, servo, and
+  DFPlayer disconnected. Do not apply 5 V to Due signal pins or power
+  high-current loads from the Due's headers.
+- Read [hardware.md](hardware.md) and [COPILOT_MASTER_SPEC.md](../COPILOT_MASTER_SPEC.md)
+  before wiring or changing the master core.
