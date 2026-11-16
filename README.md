@@ -19,9 +19,9 @@ This repository contains modular Arduino Due firmware for the Talkie Toaster sma
 
 ## Build and Upload
 
-The current firmware is a temporary ST7735 TFT and DS3231 RTC test. It shows
-the RTC detection status and current time on the display. When detected, the
-RTC is set from the computer's firmware build time on each reset or upload.
+The current firmware is a temporary DHT11 and ST7735 TFT test. It samples
+temperature and humidity every two seconds and displays the readings. The
+DHT11 data line is connected to Due D7.
 
 Build the test with `py -m platformio run -e due`. See
 [TEAM_WORK.md](TEAM_WORK.md) for individual assignments and integration steps.

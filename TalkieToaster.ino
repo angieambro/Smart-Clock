@@ -1,42 +1,32 @@
 #include <Arduino.h>
-#include <RTClib.h>
-#include <Wire.h>
+#include <DHT.h>
 
 #include "03_faith_tft_ui/tft_ui.h"
+#include "shared/pins.h"
 
 namespace {
-RTC_DS3231 rtc;
-bool rtcReady = false;
+constexpr uint8_t DHT_TYPE = DHT11;
+constexpr uint32_t SENSOR_INTERVAL_MS = 2000;
+DHT dht(DHT_PIN, DHT_TYPE);
+uint32_t lastReadAt = 0;
 }
 
 void setup() {
   SerialUSB.begin(115200);
-
-  Wire1.begin();
-  rtcReady = rtc.begin(&Wire1);
-  if (!rtcReady) {
-    SerialUSB.println("DS3231 not found; check 3V3, GND, SDA1, and SCL1");
-  } else {
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    SerialUSB.println("DS3231 set to firmware build time");
-  }
-
+  dht.begin();
   initTftUi();
+  lastReadAt = millis() - SENSOR_INTERVAL_MS;
 }
 
 void loop() {
-  static uint32_t lastUpdateAt = 0;
   const uint32_t now = millis();
-  if (now - lastUpdateAt < 1000) {
+  if (now - lastReadAt < SENSOR_INTERVAL_MS) {
     return;
   }
-  lastUpdateAt = now;
+  lastReadAt = now;
 
-  if (!rtcReady) {
-    updateTftUi(false, 0, 0, 0);
-    return;
-  }
-
-  const DateTime current = rtc.now();
-  updateTftUi(true, current.hour(), current.minute(), current.second());
+  const float humidity = dht.readHumidity();
+  const float temperatureC = dht.readTemperature();
+  const bool sensorReady = !isnan(humidity) && !isnan(temperatureC);
+  updateTftUi(sensorReady, temperatureC, humidity);
 }

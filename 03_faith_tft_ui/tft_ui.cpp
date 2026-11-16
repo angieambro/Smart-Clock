@@ -18,28 +18,26 @@ void initTftUi() {
   display.setTextSize(1);
   display.setTextColor(ST77XX_WHITE);
   display.setCursor(0, 0);
-  display.println("SMART CLOCK TEST");
+  display.println("DHT11 TEST");
   display.println();
   display.println("TFT: OK");
 }
 
-void updateTftUi(bool rtcReady, uint8_t hour, uint8_t minute, uint8_t second) {
+void updateTftUi(bool sensorReady, float temperatureC, float humidityPercent) {
   display.fillRect(0, 32, 160, 32, ST77XX_BLACK);
   display.setCursor(0, 32);
-  display.setTextColor(rtcReady ? ST77XX_GREEN : ST77XX_RED);
-  display.print("RTC: ");
-  display.println(rtcReady ? "FOUND" : "NOT FOUND");
-
-  if (rtcReady) {
-    display.setTextColor(ST77XX_WHITE);
-    display.setCursor(0, 48);
-    if (hour < 10) display.print('0');
-    display.print(hour);
-    display.print(':');
-    if (minute < 10) display.print('0');
-    display.print(minute);
-    display.print(':');
-    if (second < 10) display.print('0');
-    display.print(second);
+  if (!sensorReady) {
+    display.setTextColor(ST77XX_RED);
+    display.print("DHT11 READ FAILED");
+    return;
   }
+
+  display.setTextColor(ST77XX_WHITE);
+  display.print("Temp: ");
+  display.print(temperatureC, 1);
+  display.println(" C");
+  display.setCursor(0, 48);
+  display.print("Humidity: ");
+  display.print(humidityPercent, 1);
+  display.print(" %");
 }

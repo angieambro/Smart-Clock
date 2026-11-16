@@ -59,8 +59,9 @@ The flyback diode goes across the motor, with its cathode (striped end) toward 3
 - Connect the speaker between DFPlayer `SPK1` and `SPK2`. These are bridged outputs; neither speaker lead goes to ground.
 - TFT reset/DC/CS use D22/D24/D26. TFT SCL/SDA are SPI SCK/MOSI on the Due ICSP header.
 - The Due cannot hardware-PWM D28. Firmware therefore sets the backlight pin on continuously. For brightness control, move the BLK wire to an available Due PWM pin and update `TFT_BACKLIGHT_PIN`.
-- The TFT/RTC bench test initializes the ST7735S display and shows whether the
-  DS3231 was detected plus its current time. The DFPlayer is not initialized.
+- The current bench test reads the DHT11 on D7 every two seconds and displays
+  temperature and humidity on the ST7735 TFT. The RTC and DFPlayer are not
+  initialized by this test.
 
 ## Due Pin Cautions
 
