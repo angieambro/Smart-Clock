@@ -15,4 +15,4 @@ constexpr uint8_t ENCODER_A_PIN = 30;
 constexpr uint8_t ENCODER_B_PIN = 32;
 constexpr uint8_t ENCODER_PUSH_PIN = 34;
 
-// RTC uses the Due's hardware I2C pins.
+// RTC uses the Due's SDA1/SCL1 pins through Wire1.

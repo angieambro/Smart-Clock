@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shared/system_state.h"
+#include <Arduino.h>
 
 void initTftUi();
-void updateTftUi(const SystemState& state);
+void updateTftUi(bool rtcReady, uint8_t hour, uint8_t minute, uint8_t second);

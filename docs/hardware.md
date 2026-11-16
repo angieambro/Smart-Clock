@@ -28,11 +28,11 @@ This document follows the Talkie Toaster phased hardware plan. Keep the wiring a
 | DHT11 data | D7; Phase 1 sensor power comes from Due 3V3, with the shown 10 kohm pull-up |
 | SG90 servo signal | D8; servo power must come from an appropriate external rail |
 | Motor transistor base | D9 through the 1 kohm resistor |
-| RTC SDA/SCL | Due SDA/SCL (D20/D21) |
+| RTC SDA/SCL | Due SDA1/SCL1 (Wire1) |
 | DFPlayer RX/TX | Due TX1/RX1 (D18/D19), crossed TX-to-RX |
 | TFT reset/DC/CS/backlight | D22/D24/D26/D28 |
 | Encoder A/B/push | D30/D32/D34 |
-| TFT SCL/SDA | Due ICSP SCK/MOSI (hardware SPI clock and data) |
+| TFT SCL/SDA | Due ICSP SCK/MOSI (hardware SPI clock and data; TFT SCL is SPI clock and TFT SDA is MOSI) |
 
 The selected display listing specifies a 1.8-inch, 128x160 SPI TFT using an ST7735S controller. The project uses Adafruit_ST7735 for its graphics driver. The module's encoder and display are separate devices on the same board: encoder A/B/button are GPIO inputs, while the screen uses SPI.
 
@@ -59,8 +59,8 @@ The flyback diode goes across the motor, with its cathode (striped end) toward 3
 - Connect the speaker between DFPlayer `SPK1` and `SPK2`. These are bridged outputs; neither speaker lead goes to ground.
 - TFT reset/DC/CS use D22/D24/D26. TFT SCL/SDA are SPI SCK/MOSI on the Due ICSP header.
 - The Due cannot hardware-PWM D28. Firmware therefore sets the backlight pin on continuously. For brightness control, move the BLK wire to an available Due PWM pin and update `TFT_BACKLIGHT_PIN`.
-- The current master-only firmware does not initialize the TFT or DFPlayer.
-  Their hardware notes are retained for future integration.
+- The TFT/RTC bench test initializes the ST7735S display and shows whether the
+  DS3231 was detected plus its current time. The DFPlayer is not initialized.
 
 ## Due Pin Cautions
 

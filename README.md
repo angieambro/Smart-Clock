@@ -19,18 +19,11 @@ This repository contains modular Arduino Due firmware for the Talkie Toaster sma
 
 ## Build and Upload
 
-The master sketch and core handle the DS3231, DHT11, rotary encoder, alarm,
-countdown, temperature thresholds, motor output, and servo. Teammate folders
-are present with headers and empty implementation scaffolds, ready for their
-owners. They are not yet integrated into the main loop.
+The current firmware is a temporary ST7735 TFT and DS3231 RTC test. It shows
+the RTC detection status and current time on the display. When detected, the
+RTC is set from the computer's firmware build time on each reset or upload.
 
-Build the current master with `py -m platformio run -e due`. See
+Build the test with `py -m platformio run -e due`. See
 [TEAM_WORK.md](TEAM_WORK.md) for individual assignments and integration steps.
-
-Encoder actions: double-click to cycle alarm/timer setup modes. In alarm mode,
-rotation adjusts the selected field, short press switches fields, and long
-press enables the alarm. In timer mode, rotation adjusts duration, short press
-starts/pauses, and long press exits. Long press toggles the motor in normal
-mode and snoozes an active alarm.
 
 Start with [docs/code-guide.md](docs/code-guide.md) for a plain-language explanation. Read [docs/hardware.md](docs/hardware.md) before wiring; in particular, Phase 1 must use the Due Micro-USB port and leave high-current loads disconnected.

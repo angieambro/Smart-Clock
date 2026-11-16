@@ -310,8 +310,8 @@ void updateServo(SystemState& state, uint32_t now) {
 }
 
 void initCore(SystemState& state) {
-  Wire.begin();
-  state.rtcReady = rtc.begin();
+  Wire1.begin();
+  state.rtcReady = rtc.begin(&Wire1);
   if (!state.rtcReady) {
     SerialUSB.println("DS3231 not found; check SDA, SCL, and power");
   } else if (rtc.lostPower()) {
