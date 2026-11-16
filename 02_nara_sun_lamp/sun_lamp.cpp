@@ -6,7 +6,7 @@
 
 namespace sunlamp {
 
-// ---------- Settings: change these ----------
+// Settings: change these to whichever appropriate 
 constexpr bool SUNLAMP_DEMO = true;      // true = quick demo, false = real schedule
 constexpr uint8_t WAKE_HOUR = 7;         // sunrise starts at 07:00 ...
 constexpr uint8_t WAKE_MINUTE = 0;
