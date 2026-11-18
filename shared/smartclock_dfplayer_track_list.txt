@@ -1,0 +1,14 @@
+Smartclock - DFPlayer Mini track list
+
+0001.mp3  Alarm - electronic alarm sound
+0002.mp3  Alarm Extreme - "Alarm!" repeated four times
+0003.mp3  Alarm Easy - "Good morning. Wake up, sleepy head."
+0004.mp3  Timer - egg timer ring
+0005.mp3  High temperature - "It's getting hot in here, let's turn the fan on."
+0006.mp3  Low temperature - "It's getting chilly in here. Put a scarf on."
+0007.mp3  High humidity - "The humidity is high. Please open the windows."
+0008.mp3  Low humidity - "The humidity is low."
+0009.mp3  Good Night - "Good night!"
+
+The files go in /MP3 on the microSD card.
+Example: myDFPlayer.playMp3Folder(4) plays /MP3/0004.mp3.
