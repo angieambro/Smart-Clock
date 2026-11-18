@@ -14,9 +14,8 @@ namespace {
 
 // --- DFPlayer Mini command bytes (datasheet) ---
 constexpr uint8_t DF_CMD_RESET      = 0x0C;  // reset the module
-constexpr uint8_t DF_CMD_PLAY       = 0x03;  // play track (1-based index)
+constexpr uint8_t DF_CMD_MP3_FOLDER = 0x0F;  // play file N in /MP3 folder (playMp3Folder)
 constexpr uint8_t DF_CMD_SET_VOLUME = 0x06;  // set volume 0..30
-constexpr uint8_t DF_CMD_LOOP_TRACK = 0x08;  // cycle-play one specific track
 constexpr uint8_t DF_CMD_STOP       = 0x16;  // stop playback
 
 // Frame layout:
@@ -45,8 +44,9 @@ uint8_t  pendingCmd     = 0;
 uint16_t pendingArg     = 0;
 
 bool    playerReady  = false;
-bool    alarmLooping = false;  // true while the alarm track repeats
-uint8_t activeTrack  = 0;      // track currently requested (0 = silent)
+bool    alarmLooping = false;   // true while the alarm track repeats
+uint32_t alarmStartedMs = 0;    // when the current alarm playback began
+uint8_t activeTrack  = 0;       // track currently requested (0 = silent)
 
 // --- previous-cycle copies of the state fields we watch ---
 bool prevAlarmRinging  = false;
@@ -92,20 +92,19 @@ void pumpPending() {
   }
 }
 
-void startTrack(uint8_t track, bool loopIt) {
+void startTrack(uint8_t track) {
   if (!playerReady) {
 #if AUDIO_DEBUG
     SerialUSB.println("[audio] not ready, request ignored");
 #endif
     return;
   }
-  queueCommand(loopIt ? DF_CMD_LOOP_TRACK : DF_CMD_PLAY, track);
-  activeTrack  = track;
-  alarmLooping = loopIt;
+  queueCommand(DF_CMD_MP3_FOLDER, track);  // plays /MP3/000N.mp3
+  activeTrack = track;
 #if AUDIO_DEBUG
-  SerialUSB.print("[audio] start track ");
+  SerialUSB.print("[audio] start /MP3/000");
   SerialUSB.print(track);
-  SerialUSB.println(loopIt ? " (loop)" : " (once)");
+  SerialUSB.println(".mp3");
 #endif
 }
 
@@ -182,17 +181,23 @@ void updateAudio(const SystemState& state) {
 
   // --- 4. audio priority: the alarm always wins ---
   if (alarmOn) {
-    startTrack(TRACK_ALARM, /*loopIt=*/true);   // repeat until dismissed
+    startTrack(TRACK_ALARM);                    // fires the loop
+    alarmStartedMs = millis();
+    alarmLooping   = true;
   } else if (alarmOff && alarmLooping) {
     stopPlayback();                             // dismissed or snoozed
+  } else if (alarmLooping && state.alarmRinging
+             && (millis() - alarmStartedMs) >= AUDIO_ALARM_RETRIGGER_MS) {
+    startTrack(TRACK_ALARM);                    // software loop: track ended,
+    alarmStartedMs = millis();                  // ring again while still ringing
   } else if (!state.alarmRinging) {
     // One-shot events are only allowed when no alarm is ringing.
     if (timerDone) {
-      startTrack(TRACK_TIMER_DONE, /*loopIt=*/false);
+      startTrack(TRACK_TIMER_DONE);
     } else if (highTempOn) {
-      startTrack(TRACK_HIGH_TEMP, /*loopIt=*/false);
+      startTrack(TRACK_HIGH_TEMP);
     } else if (lowTempOn) {
-      startTrack(TRACK_LOW_TEMP, /*loopIt=*/false);
+      startTrack(TRACK_LOW_TEMP);
     }
   }
 
