@@ -14,5 +14,6 @@ constexpr uint8_t TFT_BACKLIGHT_PIN = 28;
 constexpr uint8_t ENCODER_A_PIN = 30;
 constexpr uint8_t ENCODER_B_PIN = 32;
 constexpr uint8_t ENCODER_PUSH_PIN = 34;
+constexpr uint8_t MODE_BUTTON_PIN = 36;
 
 // RTC uses the Due's SDA1/SCL1 pins through Wire1.

@@ -27,11 +27,15 @@ are excluded from the master build until their owners are ready.
 - Evaluate an enabled alarm against RTC time, a countdown timer, and high/low
   temperature thresholds.
 - Use interrupt-driven encoder input and debounced button handling.
-- Double-click cycles through normal, alarm setup, and timer setup. In alarm
-  setup, rotation edits the selected hour or minute, short press changes the
-  selected field, and long press enables the alarm. In timer setup, rotation
-  changes the duration in 15-second increments, short press starts/pauses,
-  and long press exits.
+- The mode/reset button cycles through Home, alarm setup, and timer setup;
+  holding it in Home opens the on-screen controls guide. A short press of
+  either button exits the guide to Home. In alarm setup,
+  rotation edits the selected hour or minute, short press changes the selected
+  field, and long encoder press toggles the alarm. Holding the mode/reset
+  button resets the alarm to 00:00 and disables it. In timer setup, rotation changes
+  the selected hour, minute, or second in one-unit or 10-second steps,
+  respectively, up to 24 hours. Short press advances the field; long press
+  starts or pauses the timer; holding the mode/reset button resets it to 00:00:00.
 - Long press toggles the motor in normal mode. While an alarm is active,
   short press dismisses it and long press snoozes it for five minutes.
 - Drive the motor output on D9 and sweep the SG90 signal on D8 from 45 to

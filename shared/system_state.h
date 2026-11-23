@@ -2,11 +2,18 @@
 
 #include <Arduino.h>
 
-enum UiMode : uint8_t {
+enum CoreUiMode : uint8_t {
   MODE_NORMAL,
   MODE_SET_ALARM,
   MODE_SET_TIMER,
+  MODE_HELP,
   MODE_ALERT_ACTIVE
+};
+
+enum TimerField : uint8_t {
+  TIMER_HOURS,
+  TIMER_MINUTES,
+  TIMER_SECONDS
 };
 
 struct SystemState {
@@ -23,16 +30,20 @@ struct SystemState {
   bool dhtReady = false;
   bool highTempAlert = false;
   bool lowTempAlert = false;
+  bool highHumidityAlert = false;
+  bool lowHumidityAlert = false;
 
   uint8_t alarmHour = 7;
   uint8_t alarmMinute = 0;
+  bool alarmEditingHour = true;
   bool alarmEnabled = false;
   bool alarmRinging = false;
   uint32_t timerRemainingMs = 300000;
   uint32_t timerSecondsLeft = 300;
+  TimerField timerEditingField = TIMER_HOURS;
   bool timerRunning = false;
   bool timerFinished = false;
 
   bool motorRunning = false;
-  UiMode uiMode = MODE_NORMAL;
+  CoreUiMode uiMode = MODE_NORMAL;
 };

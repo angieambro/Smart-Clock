@@ -6,15 +6,16 @@
  * - HOME (UiMode::NORMAL): Live DS3231 clock/date, DHT11 temp & humidity vertical bars,
  *   and top status icons (Alarm Bell, Countdown Timer, Fan).
  * - ALARM (UiMode::ALARM_SETUP): Editable HH:MM alarm time and ENABLED/DISABLED status.
- * - TIMER (UiMode::TIMER_SETUP): Editable MM:SS countdown timer (15s steps) and RUNNING/PAUSED status.
+ * - TIMER (UiMode::TIMER_SETUP): Editable HH:MM:SS countdown timer, max 24 hours.
  * - ALERTS (AlertType): Full-screen alerts for RTC_ALARM ("Good Morning!"),
  *   TIMER_DONE ("Time's Up!" + flashing 00:00), TEMP_HIGH ("Too Hot!"), and TEMP_LOW ("Too Cold!").
  *
  * Expected Rotary Encoder Controls:
- * - Double-Click (K0): Cycles bottom tabs (HOME -> ALARM -> TIMER).
+ * - K0: Cycles bottom tabs (HOME -> ALARM -> TIMER).
  * - Home Mode: Hold toggles fan/motor.
  * - Alarm Setup: Turn adjusts selected field, Click switches Hour/Minute, Hold enables/disables alarm.
- * - Timer Setup: Turn adjusts duration in 15s steps, Hold starts/stops timer.
+ * - Timer Setup: Push cycles HH/MM/SS; turn adjusts H/M by 1 and seconds by 10;
+ *   Hold starts/stops timer.
  * - Active Alerts: Short Press dismisses any alert; Long Press snoozes RTC_ALARM for 5 mins
  *   (no snooze on timer or temperature alerts).
  *
@@ -26,11 +27,13 @@
 
 #pragma once
 #include <Arduino.h>
+#include "../shared/system_state.h"
 
 enum class UiMode : uint8_t {
   NORMAL = 0,
   ALARM_SETUP,
-  TIMER_SETUP
+  TIMER_SETUP,
+  HELP
 };
 
 enum class AlarmField : uint8_t {
@@ -79,7 +82,8 @@ struct UiState {
 
   // Countdown Timer State & Setup
   bool timerRunning = false;
-  uint16_t timerRemainingSec = 0;
+  uint32_t timerRemainingSec = 0;
+  TimerField selectedTimerField = TIMER_HOURS;
 
   // Motor (D9) & SG90 Servo (D8) State
   bool motorRunning = false;

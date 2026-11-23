@@ -33,6 +33,13 @@ namespace {
     display.print(val);
   }
 
+  void printTimerHoursMinutes(uint32_t seconds) {
+    const uint32_t totalMinutes = (seconds + 59UL) / 60UL;
+    printTwoDigits(static_cast<uint8_t>(totalMinutes / 60UL));
+    display.print(':');
+    printTwoDigits(static_cast<uint8_t>(totalMinutes % 60UL));
+  }
+
 // Draws a bell icon to show an alarm has been set
   void drawBellIcon(int x, int y, bool active) {
     display.fillRect(x, y, 14, 14, C_BLUE);
@@ -134,6 +141,12 @@ namespace {
   void drawNormalStatic() {
     display.fillScreen(C_BLUE);
     drawBottomTabs(UiMode::NORMAL);
+    display.setTextSize(1);
+    display.setTextColor(ST77XX_WHITE, C_BLUE);
+    display.setCursor(95, 5);
+    display.print("HOLD: HELP");
+    display.setCursor(96, 5);
+    display.print("HOLD: HELP");
 
     // Left card for Time & Date
     display.fillRoundRect(4, 18, 94, 88, 4, C_CARD);
@@ -158,9 +171,9 @@ namespace {
     bool prevTimerVisible = prev.timerRunning || (prev.timerRemainingSec > 0);
 
     if (force || timerVisible != prevTimerVisible || s.timerRemainingSec != prev.timerRemainingSec) {
-      drawSandTimerIcon(30, 2, timerVisible);
+      drawSandTimerIcon(24, 2, timerVisible);
       display.setTextSize(1);
-      display.setCursor(45, 5);
+      display.setCursor(39, 5);
 
       if (timerVisible) {
         if (s.timerRunning) {
@@ -168,9 +181,7 @@ namespace {
         } else {
           display.setTextColor(C_MUTED, C_BLUE);
         }
-        printTwoDigits(s.timerRemainingSec / 60);
-        display.print(':');
-        printTwoDigits(s.timerRemainingSec % 60);
+        printTimerHoursMinutes(s.timerRemainingSec);
       } else {
         display.setTextColor(C_BG, C_BG);
         display.print("     ");
@@ -179,7 +190,7 @@ namespace {
 
     // Top icons: Fan
     if (force || s.motorRunning != prev.motorRunning) {
-      drawFanIcon(140, 2, s.motorRunning);
+      drawFanIcon(77, 2, s.motorRunning);
     }
 
     // Left Card: Big Clock (HH:MM)
@@ -299,18 +310,11 @@ namespace {
     if (force) {
       display.fillScreen(C_ORANGE);
       drawBottomTabs(UiMode::ALARM_SETUP);
-      display.fillRoundRect(10, 14, 140, 68, 6, C_CARD);
+      display.fillRoundRect(4, 4, 152, 101, 6, C_CARD);
 
       display.setTextSize(1);
-      display.setTextColor(ST77XX_BLACK);
-      display.setCursor(10, 87);
-      display.print("Turn:Adjust  Click:Next");
-      display.setCursor(10, 98);
-      display.print("Hold:Enable/Disable");
-
-      display.setTextSize(1);
-      display.setTextColor(C_MUTED);
-      display.setCursor(41, 18);
+      display.setTextColor(C_MUTED, C_CARD);
+      display.setCursor(35, 12);
       display.print("Hours : Minutes");
     }
 
@@ -319,8 +323,8 @@ namespace {
 
 
 
-      display.setTextSize(3);
-      display.setCursor(36, 35);
+      display.setTextSize(4);
+      display.setCursor(20, 38);
 
       if (s.selectedAlarmField == AlarmField::HOUR) {
         display.setTextColor(ST77XX_WHITE, C_CARD);
@@ -340,7 +344,7 @@ namespace {
       printTwoDigits(s.alarmMinute);
 
       display.setTextSize(1);
-      display.setCursor(34, 67);
+      display.setCursor(32, 83);
       if (s.alarmEnabled) {
         display.setTextColor(C_GREEN, C_CARD);
         display.print("STATUS: ENABLED ");
@@ -357,30 +361,40 @@ namespace {
     if (force) {
       display.fillScreen(C_PINK);
       drawBottomTabs(UiMode::TIMER_SETUP);
-      display.fillRoundRect(10, 12, 140, 68, 6, C_CARD);
+      display.fillRoundRect(4, 4, 152, 101, 6, C_CARD);
 
       display.setTextSize(1);
-      display.setTextColor(ST77XX_BLACK);
-      display.setCursor(10, 86);
-      display.print("Turn:+/-15s");
-      display.setCursor(10, 96);
-      display.print("Hold:Run/Stop");
-
-      display.setTextSize(1);
-      display.setTextColor(C_MUTED);
-      display.setCursor(36, 18);
-      display.print("Minutes:Seconds");
+      display.setTextColor(C_MUTED, C_CARD);
+      display.setCursor(44, 12);
+      display.print("HH : MM : SS");
     }
 
-    if (force || s.timerRemainingSec != prev.timerRemainingSec || s.timerRunning != prev.timerRunning) {
+    if (force || s.timerRemainingSec != prev.timerRemainingSec ||
+        s.timerRunning != prev.timerRunning ||
+        s.selectedTimerField != prev.selectedTimerField) {
+      const uint32_t hours = s.timerRemainingSec / 3600UL;
+      const uint32_t minutes = (s.timerRemainingSec % 3600UL) / 60UL;
+      const uint32_t seconds = s.timerRemainingSec % 60UL;
       display.setTextSize(3);
-      display.setTextColor(C_PINK, C_CARD);
-      display.setCursor(36, 35);
-      printTwoDigits(s.timerRemainingSec / 60);
+      display.setCursor(8, 39);
+      display.setTextColor(
+          s.selectedTimerField == TIMER_HOURS ? C_PINK : ST77XX_WHITE,
+          C_CARD);
+      printTwoDigits(static_cast<uint8_t>(hours));
+      display.setTextColor(ST77XX_WHITE, C_CARD);
       display.print(':');
-      printTwoDigits(s.timerRemainingSec % 60);
+      display.setTextColor(
+          s.selectedTimerField == TIMER_MINUTES ? C_PINK : ST77XX_WHITE,
+          C_CARD);
+      printTwoDigits(static_cast<uint8_t>(minutes));
+      display.setTextColor(ST77XX_WHITE, C_CARD);
+      display.print(':');
+      display.setTextColor(
+          s.selectedTimerField == TIMER_SECONDS ? C_PINK : ST77XX_WHITE,
+          C_CARD);
+      printTwoDigits(static_cast<uint8_t>(seconds));
       display.setTextSize(1);
-      display.setCursor(60, 67);
+      display.setCursor(56, 83);
       if (s.timerRunning) {
       display.setTextColor(C_GREEN, C_CARD);
       display.print("RUNNING ");
@@ -485,4 +499,86 @@ namespace {
   }
   }
 }
+
+void renderHelp(bool force) {
+  if (!force) {
+    return;
+  }
+
+  display.fillScreen(C_BG);
+  display.setTextColor(ST77XX_WHITE, C_BG);
+  display.setTextSize(2);
+  display.setCursor(28, 4);
+  display.print("CONTROLS");
+
+  display.setTextSize(1);
+  display.setTextColor(C_CYAN, C_BG);
+  display.setCursor(5, 23);
+  display.print("BOTTOM BUTTON");
+  display.setTextColor(ST77XX_WHITE, C_BG);
+  display.setCursor(5, 32);
+  display.print("Short: change screen");
+  display.setCursor(5, 41);
+  display.print("Hold Home: fan on/off");
+  display.setCursor(5, 50);
+  display.print("Hold Alarm/Timer: reset");
+
+  display.setTextColor(C_CYAN, C_BG);
+  display.setCursor(5, 62);
+  display.print("ROTARY ENCODER");
+  display.setTextColor(ST77XX_WHITE, C_BG);
+  display.setCursor(5, 71);
+  display.print("Turn: adjust value");
+  display.setCursor(5, 80);
+  display.print("Push: next field/dismiss");
+  display.setCursor(5, 89);
+  display.print("Hold Alarm: toggle on/off");
+  display.setCursor(5, 98);
+  display.print("Hold Timer: start/stop");
+  display.setCursor(5, 107);
+  display.print("Hold Home: instructions");
+  display.setTextColor(C_PINK, C_BG);
+  display.setCursor(5, 118);
+  display.print("Button/PUSH: Back to Home");
 }
+
+} // namespace
+
+  void initTftUi() {
+    pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
+    digitalWrite(TFT_BACKLIGHT_PIN, HIGH);
+
+    display.initR(INITR_BLACKTAB);
+    display.setRotation(1);
+    display.fillScreen(ST77XX_BLACK);
+    firstDraw = true;
+  }
+
+  void updateTftUi(const UiState& state) {
+    const bool force = firstDraw ||
+                       state.mode != prev.mode ||
+                       state.activeAlert != prev.activeAlert;
+
+    if (state.activeAlert != AlertType::NONE) {
+      renderTriggeredAlert(state, force);
+    } else {
+      switch (state.mode) {
+        case UiMode::ALARM_SETUP:
+          renderAlarmSetup(state, force);
+          break;
+        case UiMode::TIMER_SETUP:
+          renderTimerSetup(state, force);
+          break;
+        case UiMode::HELP:
+          renderHelp(force);
+          break;
+        case UiMode::NORMAL:
+        default:
+          renderNormal(state, force);
+          break;
+      }
+    }
+
+    prev = state;
+    firstDraw = false;
+  }

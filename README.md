@@ -19,11 +19,12 @@ This repository contains modular Arduino Due firmware for the Talkie Toaster sma
 
 ## Build and Upload
 
-The current firmware is a temporary DHT11 and ST7735 TFT test. It samples
-temperature and humidity every two seconds and displays the readings. The
-DHT11 data line is connected to Due D7.
+The integrated firmware reads the DS3231 RTC and DHT11, drives the TFT and
+encoder, automatically runs the fan for hot/high-humidity conditions, and
+plays the configured DFPlayer tracks when the audio module and microSD card
+are connected. The mode/reset button cycles through Home, Alarm, and Timer screens.
 
-Build the test with `py -m platformio run -e due`. See
+Build with `py -m platformio run -e due`. See
 [TEAM_WORK.md](TEAM_WORK.md) for individual assignments and integration steps.
 
 Start with [docs/code-guide.md](docs/code-guide.md) for a plain-language explanation. Read [docs/hardware.md](docs/hardware.md) before wiring; in particular, Phase 1 must use the Due Micro-USB port and leave high-current loads disconnected.

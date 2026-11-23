@@ -47,12 +47,17 @@ bool    playerReady  = false;
 bool    alarmLooping = false;   // true while the alarm track repeats
 uint32_t alarmStartedMs = 0;    // when the current alarm playback began
 uint8_t activeTrack  = 0;       // track currently requested (0 = silent)
+uint8_t activeAlarmTrack = TRACK_ALARM;
+uint8_t nextTimerTrack = TRACK_TIMER_ALARM_1;
 
 // --- previous-cycle copies of the state fields we watch ---
 bool prevAlarmRinging  = false;
 bool prevTimerFinished = false;
 bool prevHighTempAlert = false;
 bool prevLowTempAlert  = false;
+bool prevHighHumidityAlert = false;
+bool prevLowHumidityAlert = false;
+bool prevAlarmEnabled = false;
 
 void sendCommand(uint8_t cmd, uint16_t arg) {
   // Checksum = negative sum of all bytes between 0xFF and DL (inclusive)
@@ -178,26 +183,43 @@ void updateAudio(const SystemState& state) {
   const bool timerDone  = state.timerFinished   && !prevTimerFinished;
   const bool highTempOn = state.highTempAlert   && !prevHighTempAlert;
   const bool lowTempOn  = state.lowTempAlert    && !prevLowTempAlert;
+  const bool highHumidityOn =
+      state.highHumidityAlert && !prevHighHumidityAlert;
+  const bool lowHumidityOn =
+      state.lowHumidityAlert && !prevLowHumidityAlert;
+  const bool goodNightOn = state.alarmEnabled && !prevAlarmEnabled &&
+                           state.rtcReady && state.currentHour >= 20;
 
   // --- 4. audio priority: the alarm always wins ---
   if (alarmOn) {
-    startTrack(TRACK_ALARM);                    // fires the loop
+    activeAlarmTrack = state.rtcReady && state.currentHour < 10
+        ? TRACK_MORNING_ALARM
+        : TRACK_ALARM;
+    startTrack(activeAlarmTrack);
     alarmStartedMs = millis();
     alarmLooping   = true;
   } else if (alarmOff && alarmLooping) {
     stopPlayback();                             // dismissed or snoozed
   } else if (alarmLooping && state.alarmRinging
              && (millis() - alarmStartedMs) >= AUDIO_ALARM_RETRIGGER_MS) {
-    startTrack(TRACK_ALARM);                    // software loop: track ended,
-    alarmStartedMs = millis();                  // ring again while still ringing
+    startTrack(activeAlarmTrack);
+    alarmStartedMs = millis();
   } else if (!state.alarmRinging) {
-    // One-shot events are only allowed when no alarm is ringing.
-    if (timerDone) {
-      startTrack(TRACK_TIMER_DONE);
+    if (goodNightOn) {
+      startTrack(TRACK_GOOD_NIGHT);
+    } else if (timerDone) {
+      startTrack(nextTimerTrack);
+      nextTimerTrack = nextTimerTrack == TRACK_TIMER_ALARM_1
+          ? TRACK_TIMER_ALARM_2
+          : TRACK_TIMER_ALARM_1;
     } else if (highTempOn) {
       startTrack(TRACK_HIGH_TEMP);
     } else if (lowTempOn) {
       startTrack(TRACK_LOW_TEMP);
+    } else if (highHumidityOn) {
+      startTrack(TRACK_HIGH_HUMIDITY);
+    } else if (lowHumidityOn) {
+      startTrack(TRACK_LOW_HUMIDITY);
     }
   }
 
@@ -206,4 +228,7 @@ void updateAudio(const SystemState& state) {
   prevTimerFinished = state.timerFinished;
   prevHighTempAlert = state.highTempAlert;
   prevLowTempAlert  = state.lowTempAlert;
+  prevHighHumidityAlert = state.highHumidityAlert;
+  prevLowHumidityAlert = state.lowHumidityAlert;
+  prevAlarmEnabled = state.alarmEnabled;
 }

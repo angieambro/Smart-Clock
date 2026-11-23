@@ -1,9 +1,8 @@
 # Firmware Code Guide
 
-The Talkie Toaster firmware currently runs only the master core. The root
-Arduino sketch starts the core, which reads sensors and manages alarm, timer,
-encoder, and actuator behavior. Teammate module folders remain as implementation
-scaffolds and are not yet integrated into the main loop.
+The root Arduino sketch integrates the master core, TFT, and DFPlayer modules.
+It reads the RTC and DHT11, manages alarm and timer screens, and controls the
+fan and audio alerts.
 
 ## Project Files
 
@@ -11,31 +10,37 @@ scaffolds and are not yet integrated into the main loop.
 - `shared/pins.h` is the canonical Arduino Due pin map.
 - `shared/system_state.h` defines the state exchanged by the modules.
 - `01_angie_feng_master_core/` handles the RTC, DHT11, encoder, alarm, timer,
-  temperature thresholds, motor PWM, and SG90 servo.
-- `02_nara_sun_lamp/`, `03_faith_tft_ui/`, `04_thang_alert_leds/`, and
-  `05_binhao_audio/` contain owner-ready headers and empty `.cpp` scaffolds.
+  temperature and humidity thresholds, automatic/manual motor PWM, and SG90
+  servo.
+- `03_faith_tft_ui/` renders the current screen.
+- `05_binhao_audio/` sends the selected MP3 track commands to the DFPlayer.
+- `02_nara_sun_lamp/` and `04_thang_alert_leds/` remain separate modules.
 
 ## Startup and Main Loop
 
 Arduino calls `setup()` once. It starts native USB logging and initializes the
 master core without waiting for a serial connection.
 
-The root sketch delegates its work to the master core. Teammate modules are
-not called or compiled in the master build until they are implemented.
+The root sketch updates the core, then sends the latest state to the display
+and audio modules.
 
 ## Encoder and Modes
 
-The Due calls `onEncoderTurn()` from a hardware interrupt when encoder A falls.
-That function records the direction; the main loop copies and clears the
-volatile count with interrupts briefly disabled.
+The Due calls `onEncoderChange()` on changes to both encoder channels. A
+quadrature transition table filters invalid transitions and counts one detent
+after four valid quarter-steps. The main loop copies and clears the volatile
+detent count with interrupts briefly disabled.
 
-In normal mode, a long press toggles the motor. Double-click cycles between
-normal mode, alarm setup, and timer setup. In alarm setup, rotation edits the
-selected hour or minute and short press switches fields; long press enables
-the alarm. In timer setup, rotation changes the duration in 15-second steps,
-short press starts/pauses, and long press exits. Short press dismisses an
-active alert; long press snoozes an alarm for five minutes. Audio, volume, and
-display controls are not included in this master-only firmware.
+The mode/reset button cycles directly through Home, Alarm, and Timer. In
+Home, holding it toggles the manual fan request; holding the encoder opens the
+controls guide. A short press of either button returns from the guide to Home.
+In Alarm, rotation edits the selected hour or minute, a short encoder press
+switches fields, and a long press toggles the alarm. Holding the mode/reset
+button resets the alarm to 00:00 and disables it. In Timer, short encoder
+presses select hours, minutes, then seconds. Rotation changes hours and
+minutes in one-unit steps and seconds in 10-second steps, with a 24-hour
+maximum; a long encoder press starts or pauses the timer. Holding the
+mode/reset button resets the timer to 00:00:00.
 
 ## Alarm, Timer, and Sensors
 
@@ -43,8 +48,10 @@ The core reads the DS3231 periodically and updates the shared date/time. If
 the RTC lost power, its time is initialized from the firmware build time. The
 alarm triggers once per day at its configured hour and minute.
 
-The DHT11 is read every two seconds. Invalid readings are reported. Temperature
-alerts use 30 C and 15 C as initial high/low thresholds.
+The DHT11 is read every two seconds. High/low temperature alerts activate at
+35 C and 18 C. The fan starts at 33 C and stops when the temperature is at or
+below 31 C and humidity is below 65%. High humidity activates at 70% and low
+humidity at 20%; high humidity also requests the fan.
 
 The countdown uses elapsed `millis()` time, so it continues without blocking
 the encoder, clock, or other updates.
@@ -53,8 +60,8 @@ the encoder, clock, or other updates.
 
 The master core drives motor PWM on D9 and sweeps the SG90 signal on D8
 between 45 and 135 degrees while active, returning to 90 degrees when the motor
-stops. TFT, sun-lamp, alert LED, and DFPlayer implementations remain for the
-teammates.
+stops. DFPlayer audio uses `/MP3/0001.mp3` through `/MP3/0009.mp3` on its
+microSD card; timer completions alternate between tracks 0001 and 0004.
 
 ## Safe Changes and Testing
 
